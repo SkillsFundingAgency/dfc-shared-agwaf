@@ -1,0 +1,46 @@
+pool:
+  name: Continuous Integration 02 - SSD - 160ACU
+  demands:
+  - azureps
+  - npm
+  - node.js
+
+variables:
+  BuildPlatform: 'any cpu'
+  BuildConfiguration: 'release'
+  group: dfc-findacourse-build
+
+resources:
+  repositories:
+  - repository: self
+  - repository: dfc-devops
+    type: github
+    name: SkillsFundingAgency/dfc-devops
+    endpoint: 'GitHub (ESFA)'
+    ref: refs/tags/v1.5.0
+
+trigger:
+  branches:
+    include:
+    - master
+    - dev
+
+pr:
+  branches:
+    include:
+    - master
+    - dev
+
+steps:
+
+# Test ARM template
+- template: AzureDevOpsTemplates/Build/dfc-arm-build.yml@dfc-devops
+  parameters:
+    ArmTemplateRoot: '$(System.DefaultWorkingDirectory)\Resources'
+
+# Copy to outputted artifact
+- task: PublishBuildArtifacts@1
+  displayName: Publish Artifact
+  inputs:
+     pathtoPublish: $(Build.ArtifactStagingDirectory)
+     artifactName: Dfc.AppGateway

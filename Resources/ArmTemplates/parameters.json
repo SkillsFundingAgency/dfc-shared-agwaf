@@ -1,0 +1,377 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "appGatewayName": {
+            "value": "__appGatewayName__"
+        },
+        "appGatewaySubnetRef": {
+            "value": "__subnetResourceId__"
+        },
+        "capacity": {
+            "value": __appGatewayCapacity__
+        },
+        "appGatewayPools": {
+            "value": [ {
+                "name": "defaultBackend",
+                "fqdn": "__liveBackend__"
+            }, {
+                "name": "compBackend",
+                "fqdn": "__compBackend__"
+            }, {
+                "name": "bauBackend",
+                "fqdn": "__bauBackendIP__"
+            } ]
+        },
+        "customProbes": {
+            "value": [ {
+                "name": "appServiceProbe",
+                "type": "Microsoft.Network/applicationGateways/probes",
+                "properties": {
+                    "protocol": "Https",
+                    "path": "/",
+                    "interval": 60,
+                    "timeout": 30,
+                    "unhealthyThreshold": 3,
+                    "pickHostNameFromBackendHttpSettings": true,
+                    "minServers": 0,
+                    "match": {
+                        "statusCodes": [
+                            "200-399"
+                        ]
+                    }
+                }
+            },{
+                "name": "bauProbe",
+                "type": "Microsoft.Network/applicationGateways/probes",
+                "properties": {
+                    "protocol": "Http",
+                    "host": "__bauBackend__",
+                    "path": "/",
+                    "interval": 30,
+                    "timeout": 30,
+                    "unhealthyThreshold": 3,
+                    "pickHostNameFromBackendHttpSettings": false,
+                    "minServers": 0,
+                    "match": {
+                        "statusCodes": [
+                            "200-399"
+                        ]
+                    }
+                }
+            } ]
+        },
+        "appGatewayPoolHttpSettings": {
+            "value": [ {
+                "name": "defaultHttpSettings",
+                "port": 443,
+                "protocol": "Https",
+                "hostnameFromBackendAddress": true,
+                "probeName": "appServiceProbe"
+            },{
+                "name": "compHttpSettings",
+                "port": 443,
+                "protocol": "Https",
+                "backendPath": "/",
+                "hostnameFromBackendAddress": true,
+                "probeName": "appServiceProbe"
+            },{
+                "name": "compDysacHttpSettings",
+                "port": 443,
+                "protocol": "Https",
+                "backendPath": "/discover-your-skills-careers/",
+                "hostnameFromBackendAddress": true,
+                "probeName": "appServiceProbe"
+            },{
+                "name": "bauHttpSettings",
+                "port": 80,
+                "protocol": "Http",
+                "hostnameFromBackendAddress": false,
+                "probeName": "bauProbe"
+            },{
+                "name": "aysHttpSettings",
+                "port": 80,
+                "protocol": "Http",
+                "backendPath": "/skills-health-check/",
+                "hostnameFromBackendAddress": false,
+                "probeName": "bauProbe"
+            } ]
+        },
+        "appGatewayRouting": {
+            "value": [ {
+                "name": "bauBackendDefault",
+                "backendPool": "bauBackend",
+                "backendHttp": "bauHttpSettings",
+                "paths": [
+                    "/skills-health-check*",
+                    "/tools*",
+                    "/account*",
+                    "/startshclink*",
+                    "/ResourcePackages/*",
+                    "/your-account*",
+                    "/home/signout*",
+                    "/home/signin*",
+                    "/course-directory/*",
+                    "/WebResource.axd*",
+                    "/ScriptResource.axd*",
+                    "/alerts/weve-changed-your-email-address*",
+                    "/alerts/session-timeout*",
+                    "/alerts/403*"
+                ]
+            },{
+                "name": "bauBackendAssessSkills",
+                "backendPool": "bauBackend",
+                "backendHttp": "aysHttpSettings",
+                "paths": [
+                    "/skills-assessment/skills-health-check*"
+                ]
+            },{
+                "name": "compUiapp",
+                "backendPool": "compBackend",
+                "backendHttp": "compHttpSettings",
+                "paths": [
+                    "/app/*"
+                ]
+            },{
+                "name": "compUidysac",
+                "backendPool": "compBackend",
+                "backendHttp": "compDysacHttpSettings",
+                "paths": [
+                    "/skills-assessment/discover-your-skills-careers/*",
+                    "/skills-assessment/discover-your-skills-careers"
+                ]
+            },{
+                "name": "compUi",
+                "backendPool": "compBackend",
+                "backendHttp": "defaultHttpSettings",
+                "paths": [
+                    "/job-profiles",
+                    "/job-profiles/*",
+                    "/help",
+                    "/help/*",
+                    "/alerts",
+                    "/alerts/*",
+                    "/matchskills",
+                    "/matchskills/*",
+                    "/discover-your-skills-careers",
+                    "/discover-your-skills-careers/*"
+                ]
+            },{
+                "name": "sflookback",
+                "backendPool": "defaultBackend",
+                "backendHttp": "compHttpSettings",
+                "paths": [
+                    "/sf/*"
+                ]
+            } ]
+        },
+        "appGatewayRewrites": {
+            "value": [
+                {
+                    "name": "Location___liveFqdn__",
+                    "ruleSequence": 10,
+                    "conditions": [
+                        {
+                            "variable": "http_resp_Location",
+                            "pattern": "(https?):\\/\\/__liveFqdnEscaped__(.*)$",
+                            "ignoreCase": true,
+                            "negate": false
+                        }
+                    ],
+                    "actionSet": {
+                        "responseHeaderConfigurations": [
+                            {
+                                "headerName": "Location",
+                                "headerValue": "{http_resp_Location_1}://__appGatewayFqdn__{http_resp_Location_2}"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "Location___compBackend__",
+                    "ruleSequence": 20,
+                    "conditions": [
+                        {
+                            "variable": "http_resp_Location",
+                            "pattern": "(https?):\\/\\/__compBackendEscaped__(.*)$",
+                            "ignoreCase": true,
+                            "negate": false
+                        }
+                    ],
+                    "actionSet": {
+                        "responseHeaderConfigurations": [
+                            {
+                                "headerName": "Location",
+                                "headerValue": "{http_resp_Location_1}://__appGatewayFqdn__{http_resp_Location_2}"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "Location_azurewebsites.net",
+                    "ruleSequence": 30,
+                    "conditions": [
+                        {
+                            "variable": "http_resp_Location",
+                            "pattern": "(https?):\\/\\/[^\\/]+azurewebsites\\.net(.*)$",
+                            "ignoreCase": true,
+                            "negate": false
+                        }
+                    ],
+                    "actionSet": {
+                        "responseHeaderConfigurations": [
+                            {
+                                "headerName": "Location",
+                                "headerValue": "{http_resp_Location_1}://__appGatewayFqdn__{http_resp_Location_2}"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "LocationRedirect_azurewebsites.net",
+                    "ruleSequence": 40,
+                    "conditions": [
+                        {
+                            "variable": "http_resp_Location",
+                            "pattern": "(.*)redirect_uri=(https?)%3a%2f%2f.*azurewebsites\\.net(.*)$",
+                            "ignoreCase": true,
+                            "negate": false
+                        }
+                    ],
+                    "actionSet": {
+                        "responseHeaderConfigurations": [
+                            {
+                                "headerName": "Location",
+                                "headerValue": "{http_resp_Location_1}redirect_uri=https%3a%2f%2f__appGatewayFqdn__{http_resp_Location_3}"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "Location_bauIP",
+                    "ruleSequence": 50,
+                    "conditions": [
+                        {
+                            "variable": "http_resp_Location",
+                            "pattern": "(https?):\\/\\/__bauBackendIP__\\/(.*)$",
+                            "ignoreCase": true,
+                            "negate": false
+                        }
+                    ],
+                    "actionSet": {
+                        "responseHeaderConfigurations": [
+                            {
+                                "headerName": "Location",
+                                "headerValue": "{http_resp_Location_1}://__appGatewayFqdn__/{http_resp_Location_2}"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "Location_bau_skills",
+                    "ruleSequence": 60,
+                    "conditions": [
+                        {
+                            "variable": "http_resp_Location",
+                            "pattern": "(https?):\\/\\/[^\\/]+\\/skills-health-check\\/(.*)$",
+                            "ignoreCase": true,
+                            "negate": false
+                        }
+                    ],
+                    "actionSet": {
+                        "responseHeaderConfigurations": [
+                            {
+                                "headerName": "Location",
+                                "headerValue": "{http_resp_Location_1}://__appGatewayFqdn__/skills-assessment/skills-health-check/{http_resp_Location_2}"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "CookieResponse",
+                    "ruleSequence": 100,
+                    "conditions": [
+                        {
+                            "variable": "http_resp_Set-Cookie",
+                            "pattern": "(.*)Domain=([^;]+)(.*)",
+                            "ignoreCase": true,
+                            "negate": false
+                        }
+                    ],
+                    "actionSet": {
+                        "responseHeaderConfigurations": [
+                            {
+                                "headerName": "Set-Cookie",
+                                "headerValue": "{http_resp_Set-Cookie_1}Domain=__appGatewayFqdn__{http_resp_Set-Cookie_3}"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "X-Content-Security-Policy-Rewrite",
+                    "ruleSequence": 200,
+                    "conditions": [
+                        {
+                            "variable": "http_resp_X-Content-Security-Policy",
+                            "pattern": "(.*)__liveBackendEscaped__:443(.*)",
+                            "ignoreCase": true,
+                            "negate": false
+                        }
+                    ],
+                    "actionSet": {
+                        "responseHeaderConfigurations": [
+                            {
+                                "headerName": "X-Content-Security-Policy",
+                                "headerValue": "{http_resp_X-Content-Security-Policy_1}__appGatewayFqdn__{http_resp_X-Content-Security-Policy_2}"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "Content-Security-Policy-Rewrite",
+                    "ruleSequence": 210,
+                    "conditions": [
+                        {
+                            "variable": "http_resp_Content-Security-Policy",
+                            "pattern": "(.*)dfc-beta-dev-01-web\\.azurewebsites\\.net:443(.*)",
+                            "ignoreCase": true,
+                            "negate": false
+                        }
+                    ],
+                    "actionSet": {
+                        "responseHeaderConfigurations": [
+                            {
+                                "headerName": "Content-Security-Policy",
+                                "headerValue": "{http_resp_Content-Security-Policy_1}__appGatewayFqdn__{http_resp_Content-Security-Policy_2}"
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        "privateIPAddress": {
+            "value": "__privateIPAddress__"
+        },
+        "publicDnsLabel": {
+            "value": "__publicDnsLabel__"
+        },
+        "keyVaultName": {
+            "value": "__keyVaultName__"
+        },
+        "keyVaultSecretName": {
+            "value": "__keyVaultSecretName__"
+        },
+        "EnableMetricAlerts": {
+            "value": __EnableMetricAlerts__
+        },
+        "logStorageAccountId": {
+            "value": "__logStorageAccountId__"
+        },
+        "logWorkspaceId": {
+            "value": "__logWorkspaceId__"
+        },
+        "logRetention": {
+            "value": __logRetention__
+        }
+    }
+}
