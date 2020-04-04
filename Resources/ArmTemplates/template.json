@@ -179,7 +179,6 @@
             "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
             "name": "[variables('userAssignedIdentityName')]",
             "apiVersion": "2018-11-30",
-            "condition": "[variables('keyvaultInUse')]",
             "location": "[resourceGroup().location]"
         },
         {
