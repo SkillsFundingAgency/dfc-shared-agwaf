@@ -8,6 +8,9 @@
         "appGatewaySubnetRef": {
             "value": "__subnetResourceId__"
         },
+        "appGatewayTier": {
+            "value": "__appGatewayTier__"
+        },
         "capacity": {
             "value": __appGatewayCapacity__
         },
@@ -69,20 +72,6 @@
                 "hostnameFromBackendAddress": true,
                 "probeName": "appServiceProbe"
             },{
-                "name": "compHttpSettings",
-                "port": 443,
-                "protocol": "Https",
-                "backendPath": "/",
-                "hostnameFromBackendAddress": true,
-                "probeName": "appServiceProbe"
-            },{
-                "name": "compDysacHttpSettings",
-                "port": 443,
-                "protocol": "Https",
-                "backendPath": "/discover-your-skills-careers/",
-                "hostnameFromBackendAddress": true,
-                "probeName": "appServiceProbe"
-            },{
                 "name": "bauHttpSettings",
                 "port": 80,
                 "protocol": "Http",
@@ -124,44 +113,6 @@
                 "backendHttp": "aysHttpSettings",
                 "paths": [
                     "/skills-assessment/skills-health-check*"
-                ]
-            },{
-                "name": "compUiapp",
-                "backendPool": "compBackend",
-                "backendHttp": "compHttpSettings",
-                "paths": [
-                    "/app/*"
-                ]
-            },{
-                "name": "compUidysac",
-                "backendPool": "compBackend",
-                "backendHttp": "compDysacHttpSettings",
-                "paths": [
-                    "/skills-assessment/discover-your-skills-careers/*",
-                    "/skills-assessment/discover-your-skills-careers"
-                ]
-            },{
-                "name": "compUi",
-                "backendPool": "compBackend",
-                "backendHttp": "defaultHttpSettings",
-                "paths": [
-                    "/job-profiles",
-                    "/job-profiles/*",
-                    "/help",
-                    "/help/*",
-                    "/alerts",
-                    "/alerts/*",
-                    "/matchskills",
-                    "/matchskills/*",
-                    "/discover-your-skills-careers",
-                    "/discover-your-skills-careers/*"
-                ]
-            },{
-                "name": "sflookback",
-                "backendPool": "defaultBackend",
-                "backendHttp": "compHttpSettings",
-                "paths": [
-                    "/sf/*"
                 ]
             } ]
         },
